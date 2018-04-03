@@ -27,6 +27,9 @@ export class DataActionListener extends Listener {
           label: "Slack",
           name: "post",
           supported_action_types: ["query"],
+          supported_formats: ["txt"],
+          supported_formattings: ["unformatted"],
+          supported_visualization_formattings: ["noapply"],
           url: `${baseUrl}/slack/post_from_query_action`,
         }],
         label,
@@ -42,17 +45,19 @@ export class DataActionListener extends Listener {
 
       const channels = await this.service.usableChannels()
       const response = [{
-        description: "The Lookerbot user must be a member of the channel.",
-        label: "Channel",
+        description: "For channels, the Lookerbot user must be a member.",
+        label: "Share In",
         name: "channel",
         options: channels.map((channel) => ({name: channel.id, label: channel.label})),
         required: true,
         type: "select",
       }]
 
+      this.reply(res, response)
+
     })
 
-    return this.server.post("/data_actions", (req, res) => {
+    this.server.post("/data_actions", (req, res) => {
 
       const getParam = (name: string): string | undefined => {
         const val = (req.body.form_params != null ? req.body.form_params[name] : undefined) || (req.body.data != null ? req.body.data[name] : undefined)
@@ -75,7 +80,8 @@ export class DataActionListener extends Listener {
       const context = this.service.replyContextForChannelId(channel)
       context.dataAction = true
       context.replyPublic(msg)
-      return this.reply(res, {looker: {success: true, message: `Sent message to ${channel}!`}})
+
+      this.reply(res, {looker: {success: true, message: `Sent message to ${channel}!`}})
 
     })
   }
